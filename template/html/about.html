@@ -1,0 +1,24 @@
+{{ define "body" }}
+<hr>
+<h1 align="center">=========== {{ .Title }} ===========</h1>
+<hr>
+<table border="1" cellpadding="5" width="80%" align="center">
+    <tr>
+        <th colspan="3">
+            <p>Halo, {{ .Name }}</p>
+        </th>
+    </tr>
+    <tr>
+        <th>Host</th>
+        <th>Job</th>
+        <th>Status</th>
+    </tr>
+    {{ range $key, $value := .Info }}
+    <tr>
+        <td>{{ $value.host }}</td>
+        <td>{{ $value.job }}</td>
+        <td>{{ $value.status }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ end }}
