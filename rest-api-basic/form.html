@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>KodeSain | Free Code Tutorials</title>
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript">
+            $.fn.serializeObject = function () {
+                var o = {};
+                var a = this.serializeArray();
+                $.each(a, function () {
+                    if (o[this.name]) {
+                        if (!o[this.name].push) {
+                            o[this.name] = [o[this.name]];
+                        }
+                        o[this.name].push(this.value || '');
+                    } else {
+                        o[this.name] = this.value || '';
+                    }
+                });
+                return o;
+            };
+        </script>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="row my-5">
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <form>
+                                <div data-bind="foreach: customerField">
+                                    <div class="form-group" data-bind="css: { 'd-none': $index() == 0 }">
+                                        <label class="text-capitalize" data-bind="text: name, attr: {for: name}"></label>
+                                        <input type="text" class="form-control" data-bind="value: value, attr: {name: name, id: name}">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" data-bind="foreach: customerData">
+                                <li class="list-group-item">
+                                    <span data-bind="text: name"></span>
+                                    <button type="button" class="btn btn-sm btn-danger drop float-right" data-bind="attr: {'data-id': id}">Drop</button>
+                                    <button type="button" class="btn btn-sm btn-success edit float-right mr-2" data-bind="attr: {'data-id': id}">Edit</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var app = {
+                customerID: ko.observable(""),
+                customerData: ko.observableArray([]),
+                customerField: ko.observableArray([])
+            };
+
+            $(document).ready(function () {
+                ko.applyBindings(app);
+
+                $.post("http://localhost:8080/customer/field", function (result) {
+                    $.each(result, function (index, value) {
+                        app.customerField.push({name: index, value: value});
+                    });
+                });
+
+                $.post("http://localhost:8080/customer/show", function (result) {
+                    app.customerData(result);
+                });
+
+                $("form").submit(function (e) {
+                    e.preventDefault();
+
+                    var urlSave = "http://localhost:8080/customer/save";
+
+                    if (app.customerID() !== "") {
+                        urlSave = "http://localhost:8080/customer/save/" + app.customerID();
+                    }
+
+                    $.post(urlSave, JSON.stringify($(this).serializeObject()), function (result) {
+                        $.post("http://localhost:8080/customer/field", function (result) {
+                            app.customerID("");
+                            app.customerField([]);
+
+                            $.each(result, function (index, value) {
+                                app.customerField.push({name: index, value: value});
+                            });
+                        });
+
+                        $.post("http://localhost:8080/customer/show", function (result) {
+                            app.customerData(result);
+                        });
+                    });
+                });
+
+                $("ul.list-group").on("click", ".edit", function (e) {
+                    $.post("http://localhost:8080/customer/show/" + $(e.target).attr("data-id"), function (result) {
+                        app.customerID(result.id);
+                        app.customerField([]);
+
+                        $.each(result, function (index, value) {
+                            app.customerField.push({name: index, value: value});
+                        });
+                    });
+                }).on("click", ".drop", function (e) {
+                    $.post("http://localhost:8080/customer/drop/" + $(e.target).attr("data-id"), function (result) {
+                        $.post("http://localhost:8080/customer/show", function (result) {
+                            app.customerData(result);
+                        });
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
