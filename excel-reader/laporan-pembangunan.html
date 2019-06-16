@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <title>LAPORAN KEUANGAN PEMBANGUNAN MASJID AL-ITTIHAD</title>
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-light bg-light">
+            <div>
+                <h4><a href="laporan-pembangunan.html">LAPORAN KEUANGAN PEMBANGUNAN MASJID AL-ITTIHAD</a></h4>
+            </div>
+            <div>
+                <select id="periode" class="form-control" onchange="javascript:location.href = 'laporan-pembangunan.html#' + this.value;"></select>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div id="laporan"></div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <script src="underscore.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var detail = {};
+
+                $.ajaxSetup({
+                    async: false
+                });
+
+                $.getJSON("data/laporan.json", function (result) {
+                    var row = "";
+                    var data = _.sortBy(result, "Tanggal");
+                    var saldo = 0;
+                    var saldoAwal = "";
+
+                    $.each(data, function (index, value) {
+                        if (typeof detail[value.Periode] === "undefined") {
+                            if (row != "") {
+                                row = "<tr> \
+                                    <td class='text-center'>" + value.Tanggal + "</td> \
+                                    <td>SALDO " + saldoAwal + "</td> \
+                                    <td class='text-right'>" + currency(saldo) + "</td> \
+                                    <td class='text-right'>" + 0 + "</td> \
+                                    <td class='text-right'>" + currency(saldo) + "</td> \
+                                </tr>";
+                            } else {
+                                row = "";
+                                saldo = 0;
+                                saldoAwal = "";
+                            }
+                        }
+
+                        saldo = saldo + (value.Masuk - value.Keluar);
+                        saldoAwal = value.Periode;
+                        row += "<tr> \
+                            <td class='text-center'>" + value.Tanggal + "</td> \
+                            <td>" + value.Keterangan + "</td> \
+                            <td class='text-right'>" + currency(value.Masuk) + "</td> \
+                            <td class='text-right'>" + currency(value.Keluar) + "</td> \
+                            <td class='text-right'>" + currency(saldo) + "</td> \
+                        </tr>";
+
+                        detail[value.Periode] = row;
+                    });
+                });
+
+                $.getJSON("data/periode.json", function (result) {
+                    var table = "";
+
+                    $.each(result, function (index, value) {
+                        table += '<div style="margin-bottom:50px;"><a name="' + value + '">&nbsp;</a></div> \
+                        <h5>' + value + '</h5> \
+                        <div class="table-responsive-sm mb-3"> \
+                            <table class="table table-sm table-striped table-bordered"> \
+                                <thead> \
+                                    <tr> \
+                                        <th scope="col" class="text-center">Tanggal</th> \
+                                        <th scope="col">Keterangan</th> \
+                                        <th scope="col" class="text-center">Masuk</th> \
+                                        <th scope="col" class="text-center">Keluar</th> \
+                                        <th scope="col" class="text-center">Saldo</th> \
+                                    </tr> \
+                                </thead> \
+                                <tbody>' + detail[value] + '</tbody> \
+                            </table> \
+                        </div>';
+
+                        $("#periode").append("<option value='" + value + "'>" + value + "</option>");
+                    });
+
+                    $("#laporan").empty().append(table);
+                });
+            });
+
+            function currency(num) {
+                var num_parts = num.toString().split(".");
+                num_parts[0] = num_parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return num_parts.join(".");
+            }
+        </script>
+    </body>
+</html>
